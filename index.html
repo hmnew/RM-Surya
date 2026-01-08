@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rumah Makan Surya - Sistem Informasi</title>
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #f9fafc;
+    margin: 0; padding: 0; color: #333;
+  }
+  header {
+    background: linear-gradient(135deg, #ff8c00, #ffca28);
+    color: white; text-align: center; padding: 1.5rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  nav {
+    background: white; display: flex; justify-content: center; gap: 2rem;
+    padding: 1rem; border-bottom: 1px solid #ddd;
+  }
+  nav button {
+    background: none; border: none; cursor: pointer;
+    font-weight: 600; color: #ff8c00; font-size: 1rem;
+  }
+  nav button:hover { text-decoration: underline; }
+  .container { max-width: 900px; margin: 2rem auto; background: white;
+    border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); padding: 2rem; display:none;}
+  .container.active { display:block; }
+  h2 { color:#ff8c00; border-bottom:2px solid #ffca28; padding-bottom:0.3rem; }
+  table { width:100%; border-collapse: collapse; margin-top:1rem; }
+  th, td { border:1px solid #ddd; padding:0.75rem; text-align:left; }
+  th { background-color:#ffca28; }
+  input, select, button { font-family: inherit; padding:0.5rem; border-radius:6px;
+    border:1px solid #ccc; margin-top:0.25rem; width:100%; }
+  button.submit { background:#ff8c00; color:white; border:none; cursor:pointer; }
+  button.submit:hover { background:#e67e00; }
+
+  footer {
+    text-align: center;
+    margin: 2rem 0;
+  }
+  footer button {
+    background-color: crimson;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  footer button:hover {
+    background-color: darkred;
+  }
+
+  /* 🔔 Notifikasi visual */
+  .notif {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid #ff8c00;
+    color: #b30000;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.4s ease;
+  }
+  .notif.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Rumah Makan Surya</h1>
+  <p>Sistem Informasi Manajemen</p>
+</header>
+
+<nav>
+  <button onclick="showSection('menu')">Manajemen Menu</button>
+  <button onclick="showSection('pesanan')">Pencatatan Pesanan</button>
+  <button onclick="showSection('laporan')">Laporan Penjualan</button>
+</nav>
+
+<!-- Manajemen Menu -->
+<div class="container active" id="menu">
+  <h2>Manajemen Menu</h2>
+  <form id="menuForm">
+    <label>Nama Menu</label><input type="text" id="namaMenu" required>
+    <label>Kategori</label><select id="kategori"><option>Makanan</option><option>Minuman</option></select>
+    <label>Harga (Rp)</label><input type="number" id="harga" required>
+    <label>Stok</label><input type="number" id="stok" min="0" required>
+    <button type="submit" class="submit">Tambah / Update Menu</button>
+  </form>
+
+  <h2>Daftar Menu</h2>
+  <table>
+    <thead><tr><th>Nama</th><th>Kategori</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr></thead>
+    <tbody id="tabelMenu"></tbody>
+  </table>
+
+  <h2>Histori Penambahan Stok</h2>
+  <table>
+    <thead><tr><th>Nama Menu</th><th>Total Penambahan Stok</th><th>Terakhir Ditambah</th></tr></thead>
+    <tbody id="historiStok"></tbody>
+  </table>
+</div>
+
+<!-- Pencatatan Pesanan -->
+<div class="container" id="pesanan">
+  <h2>Pencatatan Pesanan</h2>
+  <form id="pesananForm">
+    <label>Pilih Menu</label><select id="pilihMenu" required></select>
+    <label>Harga (Rp)</label><input type="number" id="hargaMenu" readonly>
+    <label>Jumlah</label><input type="number" id="jumlah" min="1" required>
+    <button type="submit" class="submit">Tambah Pesanan</button>
+  </form>
+
+  <h2>Daftar Pesanan</h2>
+  <table>
+    <thead><tr><th>Menu</th><th>Harga</th><th>Jumlah</th><th>Total</th><th>Aksi</th></tr></thead>
+    <tbody id="tabelPesanan"></tbody>
+  </table>
+  <h3>Total Pembayaran: Rp <span id="totalBayar">0</span></h3>
+  <button onclick="selesaiPesanan()" class="submit">Selesai Pesanan</button>
+
+  <h2>Histori Pesanan</h2>
+  <table>
+    <thead><tr><th>Tanggal</th><th>Menu</th><th>Jumlah</th><th>Total</th></tr></thead>
+    <tbody id="historiPesanan"></tbody>
+  </table>
+</div>
+
+<!-- Laporan Penjualan -->
+<div class="container" id="laporan">
+  <h2>Laporan Penjualan</h2>
+  <table>
+    <thead><tr><th>Nama Menu</th><th>Total Terjual</th><th>Total Pendapatan</th></tr></thead>
+    <tbody id="tabelLaporan"></tbody>
+  </table>
+  <h3>Total Penjualan: Rp <span id="totalLaporan">0</span></h3>
+</div>
+
+<!-- 🔁 Tombol Reset Data -->
+<footer>
+  <button onclick="resetData()">Reset Data Semua</button>
+</footer>
+
+<!-- 🔔 Elemen Notifikasi -->
+<div id="notif" class="notif">Semua data berhasil dihapus 🔄</div>
+
+<script>
+let daftarMenu = JSON.parse(localStorage.getItem("daftarMenu")) || [];
+let daftarPesanan = JSON.parse(localStorage.getItem("daftarPesanan")) || [];
+let historiPesanan = JSON.parse(localStorage.getItem("historiPesanan")) || [];
+let historiStok = JSON.parse(localStorage.getItem("historiStok")) || {};
+
+if (Array.isArray(historiStok)) {
+  const newHistori = {};
+  historiStok.forEach(item => {
+    if (item.nama) {
+      newHistori[item.nama] = {
+        total: item.tambahan || item.total || 0,
+        terakhir: item.tanggal || new Date().toLocaleString('id-ID')
+      };
+    }
+  });
+  historiStok = newHistori;
+  localStorage.setItem("historiStok", JSON.stringify(historiStok));
+}
+
+function showSection(id){
+  document.querySelectorAll('.container').forEach(c=>c.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='menu'){ renderMenu(); renderHistoriStok(); }
+  if(id==='pesanan'){ loadMenuOptions(); renderPesanan(); renderHistoriPesanan(); }
+  if(id==='laporan'){ renderLaporan(); }
+}
+
+// === Manajemen Menu ===
+const menuForm = document.getElementById('menuForm');
+const tabelMenu = document.getElementById('tabelMenu');
+
+menuForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const nama = document.getElementById('namaMenu').value.trim();
+  const kategori = document.getElementById('kategori').value;
+  const harga = parseInt(document.getElementById('harga').value);
+  const stokBaru = parseInt(document.getElementById('stok').value);
+  if(!nama || isNaN(harga) || isNaN(stokBaru)) return;
+
+  const idx = daftarMenu.findIndex(m=>m.nama.toLowerCase()===nama.toLowerCase());
+  if(idx >= 0){
+    const stokLama = daftarMenu[idx].stok;
+    daftarMenu[idx].stok += stokBaru;
+    daftarMenu[idx].harga = harga;
+    daftarMenu[idx].kategori = kategori;
+
+    if(!historiStok[nama]) historiStok[nama] = { total: 0, terakhir: '' };
+    historiStok[nama].total += stokBaru;
+    historiStok[nama].terakhir = new Date().toLocaleString('id-ID');
+  } else {
+    daftarMenu.push({ nama, kategori, harga, stok: stokBaru });
+    historiStok[nama] = { total: stokBaru, terakhir: new Date().toLocaleString('id-ID') };
+  }
+
+  localStorage.setItem('daftarMenu', JSON.stringify(daftarMenu));
+  localStorage.setItem('historiStok', JSON.stringify(historiStok));
+  renderMenu(); renderHistoriStok();
+  menuForm.reset();
+});
+
+function renderMenu(){
+  tabelMenu.innerHTML = '';
+  daftarMenu.forEach((m,i)=>{
+    tabelMenu.innerHTML += `<tr>
+      <td>${m.nama}</td><td>${m.kategori}</td><td>Rp ${m.harga.toLocaleString()}</td>
+      <td>${m.stok}</td><td><button onclick="hapusMenu(${i})">Hapus</button></td></tr>`;
+  });
+}
+function hapusMenu(i){
+  const nama = daftarMenu[i].nama;
+  delete historiStok[nama];
+  daftarMenu.splice(i,1);
+  localStorage.setItem('daftarMenu',JSON.stringify(daftarMenu));
+  localStorage.setItem('historiStok',JSON.stringify(historiStok));
+  renderMenu(); renderHistoriStok();
+}
+function renderHistoriStok(){
+  const tbody = document.getElementById('historiStok');
+  tbody.innerHTML='';
+  for(const nama in historiStok){
+    const h = historiStok[nama];
+    tbody.innerHTML += `<tr><td>${nama}</td><td>${h.total}</td><td>${h.terakhir}</td></tr>`;
+  }
+}
+
+// === Pesanan ===
+const pilihMenu=document.getElementById('pilihMenu');
+const hargaMenu=document.getElementById('hargaMenu');
+const pesananForm=document.getElementById('pesananForm');
+const tabelPesanan=document.getElementById('tabelPesanan');
+const totalBayar=document.getElementById('totalBayar');
+
+function loadMenuOptions(){
+  pilihMenu.innerHTML="<option disabled selected>Pilih Menu</option>";
+  daftarMenu.forEach((m,i)=>{
+    pilihMenu.innerHTML += `<option value="${i}">${m.nama} (Stok: ${m.stok})</option>`;
+  });
+}
+pilihMenu.addEventListener('change',e=>{
+  const menu=daftarMenu[e.target.value];
+  hargaMenu.value=menu?menu.harga:'';
+});
+pesananForm.addEventListener('submit',e=>{
+  e.preventDefault();
+  const index=pilihMenu.value;
+  const menu=daftarMenu[index];
+  const jumlah=parseInt(document.getElementById('jumlah').value);
+  if(jumlah>menu.stok){alert("Stok tidak cukup!");return;}
+  const totalItem=jumlah*menu.harga;
+  daftarPesanan.push({nama:menu.nama,harga:menu.harga,jumlah,total:totalItem});
+  menu.stok-=jumlah;
+
+  localStorage.setItem('daftarMenu',JSON.stringify(daftarMenu));
+  localStorage.setItem('daftarPesanan',JSON.stringify(daftarPesanan));
+  renderPesanan(); loadMenuOptions(); renderMenu(); pesananForm.reset();
+});
+function renderPesanan(){
+  tabelPesanan.innerHTML=''; let total=0;
+  daftarPesanan.forEach((p,i)=>{
+    total+=p.total;
+    tabelPesanan.innerHTML+=`<tr>
+      <td>${p.nama}</td><td>Rp ${p.harga.toLocaleString()}</td><td>${p.jumlah}</td>
+      <td>Rp ${p.total.toLocaleString()}</td>
+      <td><button onclick="editPesanan(${i})">Edit</button>
+          <button onclick="hapusPesanan(${i})">Hapus</button></td></tr>`;
+  });
+  totalBayar.textContent=total.toLocaleString();
+}
+function editPesanan(i){
+  const p=daftarPesanan[i];
+  const menuIndex=daftarMenu.findIndex(m=>m.nama===p.nama);
+  daftarMenu[menuIndex].stok+=p.jumlah;
+  loadMenuOptions(); renderMenu();
+  document.getElementById('jumlah').value=p.jumlah;
+  pilihMenu.value=menuIndex; hargaMenu.value=p.harga;
+  hapusPesanan(i);
+}
+function hapusPesanan(i){
+  const p=daftarPesanan[i];
+  const menuIndex=daftarMenu.findIndex(m=>m.nama===p.nama);
+  daftarMenu[menuIndex].stok+=p.jumlah;
+  daftarPesanan.splice(i,1);
+  localStorage.setItem('daftarPesanan',JSON.stringify(daftarPesanan));
+  localStorage.setItem('daftarMenu',JSON.stringify(daftarMenu));
+  renderPesanan(); renderMenu(); loadMenuOptions();
+}
+function selesaiPesanan(){
+  if(daftarPesanan.length===0){alert("Belum ada pesanan.");return;}
+  const tgl=new Date().toLocaleString('id-ID');
+  daftarPesanan.forEach(p=>historiPesanan.push({...p,tanggal:tgl}));
+  localStorage.setItem('historiPesanan',JSON.stringify(historiPesanan));
+  daftarPesanan=[]; localStorage.setItem('daftarPesanan',JSON.stringify([]));
+  renderPesanan(); renderHistoriPesanan(); alert("Pesanan selesai disimpan ke histori.");
+}
+function renderHistoriPesanan(){
+  const body=document.getElementById('historiPesanan'); body.innerHTML='';
+  historiPesanan.forEach(h=>{
+    body.innerHTML+=`<tr><td>${h.tanggal}</td><td>${h.nama}</td><td>${h.jumlah}</td><td>Rp ${h.total.toLocaleString()}</td></tr>`;
+  });
+}
+
+// === Laporan Gabungan ===
+const tabelLaporan=document.getElementById('tabelLaporan');
+const totalLaporan=document.getElementById('totalLaporan');
+function renderLaporan(){
+  const gabung={}; let total=0;
+  historiPesanan.forEach(p=>{
+    if(!gabung[p.nama]) gabung[p.nama]={terjual:0,pendapatan:0};
+    gabung[p.nama].terjual+=p.jumlah; gabung[p.nama].pendapatan+=p.total;
+  });
+  tabelLaporan.innerHTML='';
+  for(const nama in gabung){
+    const g=gabung[nama]; total+=g.pendapatan;
+    tabelLaporan.innerHTML+=`<tr><td>${nama}</td><td>${g.terjual}</td><td>Rp ${g.pendapatan.toLocaleString()}</td></tr>`;
+  }
+  totalLaporan.textContent=total.toLocaleString();
+}
+
+// ✅ Reset Data Semua + Notifikasi
+function resetData(){
+  if(confirm("Yakin ingin menghapus semua data dan mulai dari awal?")){
+    localStorage.clear();
+    daftarMenu=[]; daftarPesanan=[]; historiPesanan=[]; historiStok={};
+    renderMenu(); renderPesanan(); renderHistoriPesanan(); renderHistoriStok();
+    showNotif("Semua data berhasil dihapus 🔄");
+    setTimeout(()=>{ location.reload(); },2000);
+  }
+}
+
+// 🔔 Tampilkan notifikasi animasi
+function showNotif(msg){
+  const notif=document.getElementById("notif");
+  notif.textContent=msg;
+  notif.classList.add("show");
+  setTimeout(()=>notif.classList.remove("show"),1800);
+}
+
+renderMenu(); renderHistoriStok(); renderHistoriPesanan();
+</script>
+
+</body>
+</html>
